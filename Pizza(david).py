@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Mar 22 08:48:41 2017
-
-@author: skarb
-"""
 
 # This tells matplotlib not to try opening a new window for each plot.
 %matplotlib inline
@@ -24,6 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.grid_search import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
 
 # SK-learn libraries for evaluation.
 from sklearn.metrics import confusion_matrix
@@ -35,41 +30,93 @@ from sklearn.feature_extraction.text import *
 
 from subprocess import check_output
 
+# For when I'm working on my desktop
+#os.chdir("C:\\Users\\skarb\\Desktop\\Github\\W207_final_proj\\")
 
-os.chdir("C:\\Users\\skarb\\Desktop\\W207_Final\\")
 
-
+####################################################################
+# A place to test things or do EDA
+####################################################################
 # setup the training and development data
-train_json_array = np.array(pd.read_json('train.json', orient='columns'))
-
-data_set = train_json_array[:,6]
-data_labels = train_json_array[:,22]
-
-train_data = data_set[:data_set.shape[0]/2]
-train_outcomes = data_labels[:data_labels.shape[0]/2]
-train_labels = np.where(train_outcomes==True, 1, 0)
-
-dev_data = data_set[(data_set.shape[0]/2)+1:]
-dev_outcomes = data_labels[(data_labels.shape[0]/2)+1:]
-dev_labels = np.where(dev_outcomes==True, 1, 0)
-
-print('There are ',train_json_array.shape[0], ' observations and ', train_json_array.shape[1], ' features\n')
+train_data = np.array(pd.read_json('train.json', orient='columns'))
+train_labels = np.where(train_data[:,22]==True,1,0)
+text_data = train_data[:,6]
 
 
-# shows how many people got pizza?
-yescount = 0;
-nocount = 0;
-for i in range(0, train_json_array.shape[0]):
-    if yescount > 3 and nocount > 3:
-        break 
-    if train_json_array[i][22] == False and nocount < 4:
-        print(i, '. Outcome: ',train_json_array[i][22],'\n', train_json_array[i][6],'\n')
-        nocount += 1
-    elif train_json_array[i][22] == True and yescount < 4:
-        print(i, '. ',train_json_array[i][22],'\n', train_json_array[i][6],'\n')
-        yescount += 1
-    else:
-        continue
+# some posts have crazy high vote counts
+np.sort(train_data[:,26])[:-11:-1]
+
+
+train_data[:,26].shape
+
+
+
+train_data['bin_votes'] = bin_votes
+
+np.max(train_data[:,26])/1000
+   
+
+
+####################################################################
+####################################################################
+
+###########################################
+# Just numeric features
+####################################
+
+np.random.seed(1)
+
+# indices of all numeric variables
+all_cont_num_vars = [1,2,5,9,10,11,12,13,14,15,16,17,18,19,20,21,24,25,26,27]
+
+# only "at time of request" numeric variables
+cont_num_vars_at_request = [1,2,5,9,11,13,15,17,19,21,24,26]
+
+
+# Preparing train/test data
+num_data = train_data[all_cont_num_vars]
+num_labels = train_labels
+
+# randomizing the data
+shuffle = np.random.permutation(np.arange(num_data.shape[0]))
+num_train_data, num_train_labels = num_data[shuffle], num_labels[shuffle]
+
+num_train_data = num_data[:3000,]
+num_train_labels = num_labels[:3000]
+
+num_test_data = num_data[3001:,]
+num_test_labels = num_labels[3001:]
+
+
+
+# simple logistic regression model
+clf = LogisticRegression(C = 100)
+clf.fit(mini_train_data, mini_train_labels)
+
+preds = clf.predict(mini_test_data)
+
+print(classification_report(mini_test_labels,preds))
+
+print(metrics.accuracy_score(mini_test_labels,preds))
+
+
+
+# simple Random Forest model (default)
+clf2 = RandomForestClassifier(n_estimators=12)
+clf2.fit(mini_train_data, mini_train_labels)
+
+preds2 = clf2.predict(mini_test_data)
+
+print(classification_report(mini_test_labels,preds2))
+
+print(metrics.accuracy_score(mini_test_labels,preds2))
+
+##########################################################################
+##########################################################################
+
+##############################
+# Working with the text data #
+##############################
 
 
 # Logistic regression on half of train data
@@ -85,13 +132,10 @@ pred_labels = clf.predict(X_dev)
 print(pred_labels.shape)
 target_names = ['Got pizza', 'No pizza']
 print(classification_report(dev_labels, pred_labels, target_names=target_names))
-##################################
 
-***********************
-## David's additions **
-***********************
 
-# Step 1) extract and setup test data
+
+#  extract and setup test data
 test_json_array = np.array(pd.read_json('test.json', orient='columns'))
 test_data = test_json_array[:,2]
 
@@ -99,17 +143,21 @@ labels_whole_train = np.where(data_labels==True, 1, 0)
 X_whole_train = tfv.fit_transform(data_set)
 X_whole_test = tfv.transform(test_data)
 
-# Step 2) run logistic regression on ALL training data
+# run logistic regression on ALL training data
 C_vals = {'C': [0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]}
 model = LogisticRegression()
 regression_model = GridSearchCV(model, C_vals, scoring="f1_macro")
 regression_model.fit(X_whole_train, labels_whole_train)
 
-# Step 3) predict test data
+# predict test data
 pred_test = regression_model.predict(X_whole_test)  
 
-# Step 4) output results in the proper format
+##########################################################################
+##########################################################################
 
+####################################
+# OUTPUTING RESULTS FOR SUBMISSION #
+####################################
 request_id = test_json_array[:,1]
 
 output_submission = {"request_id": request_id , "requester_received_pizza":pred_test}
