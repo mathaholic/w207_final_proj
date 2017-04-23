@@ -10,6 +10,7 @@ import nltk
 import json
 import pandas as pd
 import os
+import xgboost as xgb
 
 # SK-learn libraries for learning.
 from sklearn.pipeline import Pipeline
@@ -30,8 +31,12 @@ from sklearn.feature_extraction.text import *
 
 from subprocess import check_output
 
+mingw_path = 'C:\\Program Files\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev2\\mingw64\\bin'
+
+os.environ['PATH'] = mingw_path + ';' + os.environ['PATH']
+
 # For when I'm working on my desktop
-#os.chdir("C:\\Users\\skarb\\Desktop\\Github\\W207_final_proj\\")
+os.chdir("C:\\Users\\skarb\\Desktop\\Github\\w207_final_proj\\")
 
 
 ####################################################################
@@ -47,15 +52,22 @@ text_data = train_data[:,6]
 np.sort(train_data[:,26])[:-11:-1]
 
 
-train_data[:,26].shape
+for x,y in enumerate(train_data.columns):
+    print(x,y)
 
+for j in [1,5,6,60,600,659,3000]:
+    for i in all_cont_num_vars:
+        print(train_data[j,i])
 
+np.unique(train_data[:,25])
 
 train_data['bin_votes'] = bin_votes
 
 np.max(train_data[:,26])/1000
    
+train_data[0:10,28]
 
+train_data[3]
 
 ####################################################################
 ####################################################################
@@ -74,8 +86,10 @@ cont_num_vars_at_request = [1,2,5,9,11,13,15,17,19,21,24,26]
 
 
 # Preparing train/test data
-num_data = train_data[all_cont_num_vars]
+num_data = train_data[:,all_cont_num_vars]
 num_labels = train_labels
+
+
 
 # randomizing the data
 shuffle = np.random.permutation(np.arange(num_data.shape[0]))
@@ -91,25 +105,34 @@ num_test_labels = num_labels[3001:]
 
 # simple logistic regression model
 clf = LogisticRegression(C = 100)
-clf.fit(mini_train_data, mini_train_labels)
+clf.fit(num_train_data, num_train_labels)
 
-preds = clf.predict(mini_test_data)
+preds = clf.predict(num_test_data)
 
-print(classification_report(mini_test_labels,preds))
+print(classification_report(num_test_labels,preds))
 
-print(metrics.accuracy_score(mini_test_labels,preds))
+print(metrics.accuracy_score(num_test_labels,preds))
 
 
 
 # simple Random Forest model (default)
 clf2 = RandomForestClassifier(n_estimators=12)
-clf2.fit(mini_train_data, mini_train_labels)
+clf2.fit(num_train_data, num_train_labels)
 
-preds2 = clf2.predict(mini_test_data)
+preds2 = clf2.predict(num_test_data)
 
-print(classification_report(mini_test_labels,preds2))
+print(classification_report(num_test_labels,preds2))
 
-print(metrics.accuracy_score(mini_test_labels,preds2))
+print(metrics.accuracy_score(num_test_labels,preds2))
+
+
+gbm = xgb.XGBClassifier()
+gbm.fit(num_train_data, num_train_labels)
+preds3 = gbm.predict(num_test_data)
+
+print(classification_report(num_test_labels,preds3))
+
+print(metrics.accuracy_score(num_test_labels,preds3))
 
 ##########################################################################
 ##########################################################################
