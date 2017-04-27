@@ -2,6 +2,10 @@
 # This tells matplotlib not to try opening a new window for each plot.
 %matplotlib inline
 
+# Allows for proper import of xgboost package
+mingw_path = 'C:\\Program Files\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev2\\mingw64\\bin'
+os.environ['PATH'] = mingw_path + ';' + os.environ['PATH']
+
 # General libraries.
 import re
 import numpy as np
@@ -31,9 +35,7 @@ from sklearn.feature_extraction.text import *
 
 from subprocess import check_output
 
-mingw_path = 'C:\\Program Files\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev2\\mingw64\\bin'
 
-os.environ['PATH'] = mingw_path + ';' + os.environ['PATH']
 
 # For when I'm working on my desktop
 os.chdir("C:\\Users\\skarb\\Desktop\\Github\\w207_final_proj\\")
@@ -43,9 +45,65 @@ os.chdir("C:\\Users\\skarb\\Desktop\\Github\\w207_final_proj\\")
 # A place to test things or do EDA
 ####################################################################
 # setup the training and development data
-train_data = np.array(pd.read_json('train.json', orient='columns'))
+df = pd.read_json("train.json", orient="columns")
+train_data = np.array(pd.read_json("train.json", orient="columns"))
 train_labels = np.where(train_data[:,22]==True,1,0)
 text_data = train_data[:,6]
+##############################################
+
+# Playing with the DataFrame
+
+# Let's verify our features' object types
+df.dtypes
+
+df.head()
+
+df.columns
+
+df['test'] = pd.to_datetime(df['unix_timestamp_of_request_utc'], unit='s')
+
+
+test = df[['test','number_of_upvotes_of_request_at_retrieval','requester_received_pizza']]
+
+test.head()
+
+test[]
+
+
+df[]
+df.describe()
+
+df.giver_username_if_known
+
+plt.figure()
+
+plt.scatter(sample.words, sample.requester_received_pizza)
+
+
+len(df["request_text"][0].split())
+df["words"]
+
+sample = df[['words','requester_received_pizza']]
+
+
+
+
+df["words"] = map(df)
+
+df["words"] = [len(x.split()) for x in df["request_text"]]
+
+test1 = "this is a string"
+type(test1)
+test
+
+len(test1.split())
+
+
+
+train_data.shape
+
+
+
 
 
 # some posts have crazy high vote counts
