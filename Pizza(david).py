@@ -130,24 +130,62 @@ train_data[3]
 ####################################################################
 ####################################################################
 
-###########################################
-# Just numeric features
-####################################
+###################################################
+# Numeric data, ALL DATA USED FOR KAGGLE SUBMISSION
+###################################################
 
-np.random.seed(1)
+
+# Train / Test data with common features only
+train_json_array = pd.read_json('train.json', orient='columns')
+train_data = np.array(pd.read_json('train.json', orient='columns'))
+test_json_array = pd.read_json('test.json', orient='columns')
+test_data = np.array(pd.read_json('test.json', orient='columns'))
+
+train_subset = np.array(train_json_array[test_json_array.columns])
+
+numeric_features = [4,5,6,7,8,9,10,12,13]
+
+train_numeric_subset = train_subset[:,numeric_features]
+test_numeric_subset = test_data[:,numeric_features]
+
+# simple Random Forest model (default)
+clf2 = RandomForestClassifier(n_estimators=12)
+clf2.fit(train_numeric_subset, train_labels)
+
+preds2 = clf2.predict(test_numeric_subset)
+
+request_id = test_json_array[:,1]
+
+output_submission = {"request_id": request_id , "requester_received_pizza":preds2}
+
+my_submission = pd.DataFrame(data=output_submission)
+my_submission.to_csv('second_submission.csv', index = False)
+
+
+
+test_json_array[numeric_features].dtypes
+test_json_array.columns
+train_subset.columns == test_json_array.columns
+
+train_numeric_subset.shape
+
+############################################################################
+
+######### For model testing purposes only ##################################
+
+############################################################################
 
 # indices of all numeric variables
 all_cont_num_vars = [1,2,5,9,10,11,12,13,14,15,16,17,18,19,20,21,24,25,26,27]
 
 # only "at time of request" numeric variables
-cont_num_vars_at_request = [1,2,5,9,11,13,15,17,19,21,24,26]
-
+train_test_indices= [0,4,5,9,11,13,15,17,19,21,24,26]
 
 # Preparing train/test data
 num_data = train_data[:,all_cont_num_vars]
 num_labels = train_labels
 
-
+np.random.seed(1)
 
 # randomizing the data
 shuffle = np.random.permutation(np.arange(num_data.shape[0]))
@@ -159,6 +197,9 @@ num_train_labels = num_labels[:3000]
 num_test_data = num_data[3001:,]
 num_test_labels = num_labels[3001:]
 
+###########################################################################
+
+###########################################################################
 
 
 # simple logistic regression model
